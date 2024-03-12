@@ -1,0 +1,78 @@
+from enum import Enum
+
+
+class Timeouts:
+    SECONDS_10 = 10
+    MINUTES_2 = 2 * 60
+    MINUTES_10 = 10 * 60
+    MINUTES_30 = 30 * 60
+    HOUR_1 = 1 * 60 * 60
+    HOUR_6 = 6 * 60 * 60
+    HOUR_24 = 24 * 60 * 60
+    DAY_5 = 5 * 24 * 60 * 60
+    ONE_MONTH = 30 * 24 * 60 * 60
+
+
+class CacheKeys(Enum):
+    # LIST
+    USER_DETAILS_BY_PK = None
+    REVIEW_LIST = None
+    REVIEW_DETAILS_BY_PK = None
+    USER_LIST = None
+    DELIVERY_STATUS_LIST = None
+    DELIVERY_STATUS_DETAILS_BY_PK = None
+    SHIPMENT_LIST = None
+    SHIPMENT_DETAILS_BY_PK = None
+    SHIPPING_PROVIDER_LIST = None
+    SHIPPING_PROVIDER_DETAILS_BY_PK = None
+    RETURN_ITEM_LIST = None
+    RETURN_ITEM_DETAILS_BY_PK = None
+    REFUND_LIST = None
+    REFUND_DETAILS_BY_PK = None
+    RETURN_LIST = None
+    RETURN_DETAILS_BY_PK = None
+    ORDER_LIST = None
+    ORDER_DETAILS_BY_PK = None
+    ORDER_ITEM_LIST = None
+    ORDER_ITEM_DETAILS_BY_PK = None
+    PAYMENT_LIST = None
+    PAYMENT_DETAILS_BY_PK = None
+    CART_ITEM_LIST = None
+    CART_ITEM_DETAILS_BY_PK = None
+    WISHLIST_ITEM_LIST = None
+    WISHLIST_ITEM_DETAILS_BY_PK = None
+    WISHLIST_LIST = None
+    WISHLIST_DETAILS_BY_PK = None
+    ADDRESS_LIST = None
+    ADDRESS_DETAILS_BY_PK = None
+    CUSTOMER_LIST = None
+    CUSTOMER_DETAILS_BY_PK = None
+    ATTRIBUTE_LIST = None
+    ATTRIBUTE_DETAILS_BY_PK = None
+    ATTRIBUTE_VALUE_LIST = None
+    ATTRIBUTE_VALUE_DETAILS_BY_PK = None
+    CATEGORY_LIST = None
+    COLLECTION_LIST = None
+    SUPPLIER_LIST = None
+    TAG_LIST = None
+    COUPON_LIST = None
+    PRODUCT_LIST = None
+    PRODUCT_VARIANT_LIST = None
+    PRODUCT_IMAGE_LIST = None
+    SITE_VISIT_LIST = None
+
+    # DETAILS
+    CATEGORY_DETAILS_BY_PK = None
+    COLLECTION_DETAILS_BY_PK = None
+    SUPPLIER_DETAILS_BY_PK = None
+    TAG_DETAILS_BY_PK = None
+    COUPON_DETAILS_BY_PK = None
+    PRODUCT_DETAILS_BY_PK = None
+    PRODUCT_VARIANT_DETAILS_BY_PK = None
+    PRODUCT_IMAGE_DETAILS_BY_PK = None
+    SITE_VISIT_DETAILS_BY_PK = None
+
+
+class SMS:
+    OTP_LOGIN = "otp-{otp}"
+    TEXTLOCAL_HOST = "https://api.textlocal.in/send/?"

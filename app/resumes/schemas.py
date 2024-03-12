@@ -21,9 +21,6 @@ class EducationSchema(BaseModel):
     degree: Optional[constr(strip_whitespace=True, min_length=1)] = None
     duration: constr(strip_whitespace=True, min_length=1)
 
-    class Config:
-        orm_mode = True
-
 
 class ExperienceSchema(BaseModel):
     role: constr(strip_whitespace=True, min_length=1)
@@ -32,41 +29,26 @@ class ExperienceSchema(BaseModel):
     duration: constr(strip_whitespace=True, min_length=1)
     description: List[constr(strip_whitespace=True, min_length=1)] = []
 
-    class Config:
-        orm_mode = True
-
 
 class ProjectSchema(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
     duration: constr(strip_whitespace=True, min_length=1)
     description: List[constr(strip_whitespace=True, min_length=1)] = []
 
-    class Config:
-        orm_mode = True
-
 
 class AchievementSchema(BaseModel):
     name: constr(strip_whitespace=True, min_length=1)
     description: List[constr(strip_whitespace=True, min_length=1)] = []
-
-    class Config:
-        orm_mode = True
 
 
 class SkillSchema(BaseModel):
     skill: constr(strip_whitespace=True, min_length=1)
     value: constr(strip_whitespace=True, min_length=1)
 
-    class Config:
-        orm_mode = True
-
 
 class ProfileLinkSchema(BaseModel):
     platform: constr(strip_whitespace=True, min_length=1)
     url: str
-
-    class Config:
-        orm_mode = True
 
 
 class ResumeSchema(BaseModel):

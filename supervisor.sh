@@ -5,7 +5,7 @@ source env/bin/activate
 # Set environment variables here
 export DEPLOYMENT_ENVIRONMENT="prod"
 
-cd /var/lib/jenkins/workspace/HHT/
+cd /var/lib/jenkins/workspace/CHECK/
 
 python3 manage.py migrate
 echo "Migrations done"

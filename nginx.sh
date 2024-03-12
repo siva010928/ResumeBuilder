@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Delete the old Nginx configuration file, if it exists
-sudo rm -f /etc/nginx/sites-available/METRO.conf
-sudo rm -f /etc/nginx/sites-enabled/METRO.conf
+sudo rm -f /etc/nginx/sites-available/CHECK.conf
+sudo rm -f /etc/nginx/sites-enabled/CHECK.conf
 
 # Copy the new Nginx configuration file
-sudo cp METRO.conf /etc/nginx/sites-available/METRO.conf
+sudo cp CHECK.conf /etc/nginx/sites-available/CHECK.conf
 
 # Create a symbolic link for Nginx
-sudo ln -s /etc/nginx/sites-available/METRO.conf /etc/nginx/sites-enabled/METRO.conf
+sudo ln -s /etc/nginx/sites-available/CHECK.conf /etc/nginx/sites-enabled/CHECK.conf
 
 # Test the Nginx configuration for syntax errors
 if sudo nginx -t; then

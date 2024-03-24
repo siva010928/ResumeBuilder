@@ -1,63 +1,102 @@
 import subprocess
 import os
 
-from django.http import JsonResponse, FileResponse
+from django.contrib.auth import get_user_model
+from django.core import cache
+from django.http import JsonResponse, FileResponse, HttpResponse
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from app.resumes.controllers import (ProfileController, EducationController, ExperienceController,
-                                     ProjectController, AchievementController, SkillController, ProfileLinkController)
+                                     ProjectController, AchievementController, SkillController, ProfileLinkController,
+                                     ResumeController)
+from app.resumes.models import Resume
 from app.resumes.serializers import (ProfileSerializer, EducationSerializer, ExperienceSerializer,
-                                     ProjectSerializer, AchievementSerializer, SkillSerializer, ProfileLinkSerializer)
+                                     ProjectSerializer, AchievementSerializer, SkillSerializer, ProfileLinkSerializer,
+                                     ResumeDetailSerializer)
 from app.resumes.schemas import (ProfileSchema, EducationSchema, ExperienceSchema,
-                                 ProjectSchema, AchievementSchema, SkillSchema, ProfileLinkSchema, ResumeSchema)
+                                 ProjectSchema, AchievementSchema, SkillSchema, ProfileLinkSchema, ResumeSchema,
+                                 ResumeDynamicSchema, ResumeListSchema)
+from app.utils.constants import CacheKeys, Timeouts
+from app.utils.helpers import build_cache_key
+from app.utils.pagination import MyPagination
 from app.utils.views import BaseViewSet
+
+User = get_user_model()
 
 
 class ResumeViewSet(BaseViewSet):
-    # Profile
-    profile_controller = ProfileController()
-    profile_serializer = ProfileSerializer
-    profile_schema = ProfileSchema
-
-    # Education
-    education_controller = EducationController()
-    education_serializer = EducationSerializer
-    education_schema = EducationSchema
-
-    # Experience
-    experience_controller = ExperienceController()
-    experience_serializer = ExperienceSerializer
-    experience_schema = ExperienceSchema
-
-    # Project
-    project_controller = ProjectController()
-    project_serializer = ProjectSerializer
-    project_schema = ProjectSchema
-
-    # Achievement
-    achievement_controller = AchievementController()
-    achievement_serializer = AchievementSerializer
-    achievement_schema = AchievementSchema
-
-    # Skill
-    skill_controller = SkillController()
-    skill_serializer = SkillSerializer
-    skill_schema = SkillSchema
-
-    # ProfileLink
-    profile_link_controller = ProfileLinkController()
-    profile_link_serializer = ProfileLinkSerializer
-    profile_link_schema = ProfileLinkSchema
-
+    permission_classes = [IsAuthenticated]
+    controller = ResumeController()
+    list_schema = ResumeListSchema
     resume_schema = ResumeSchema
+    resume_dynamic_schema = ResumeDynamicSchema
+    cache_key_retrieve = CacheKeys.RESUME_DETAILS_BY_PK
+    cache_key_list = CacheKeys.RESUME_LIST
 
-    @action(methods=['post'], detail=False, url_path='generate-pdf')
+    @extend_schema(
+        description="List all Resumes",
+        responses={200: ResumeDetailSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(name='user_id', type=int, description='Filter by user ID')
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, **kwargs)
+
+    @extend_schema(
+        description="List allmy  Resumes",
+        responses={200: ResumeDetailSerializer(many=True)},
+    )
+    @action(methods=['get'], detail=False, url_path='my-resumes')
+    def my_resumes(self, request, *args, **kwargs):
+        data = self.list_schema(user_id=request.user.id)
+        paginator = MyPagination()
+        page_key = request.query_params.get('page')
+        instance, cache_key = None, ""
+        if self.cache_key_list.value:
+            cache_key = build_cache_key(
+                self.cache_key_list,
+                page=page_key,
+                **data.dict()
+            )
+            instance = cache.get(cache_key)
+
+        if instance:
+            res = instance
+        else:
+            errors, data = self.controller.filter(**data.dict())
+            if errors:
+                return JsonResponse(data=errors, status=status.HTTP_400_BAD_REQUEST)
+            queryset = data  # Assuming data is a queryset here
+            page = paginator.paginate_queryset(queryset, request, view=self)
+            if page is not None:
+                res = self.controller.serialize_queryset(page)
+                if self.cache_key_list.value:
+                    cache.set(cache_key, res, timeout=Timeouts.MINUTES_10)
+                return paginator.get_paginated_response(res)
+            res = self.controller.serialize_queryset(queryset)
+
+        return JsonResponse(res, safe=False, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        description="Retrieve a specific Resume by ID",
+        responses={200: ResumeDetailSerializer}
+    )
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        return super().retrieve(request, pk, *args, **kwargs)
+
+    @action(methods=['post'], detail=False, url_path='generate-pdf', permission_classes=[AllowAny])
     def generate_pdf(self, request, *args, **kwargs):
-        errors, data = self.profile_controller.parse_request(self.resume_schema, request.data)
+        errors, data = self.controller.parse_request(self.resume_schema, request.data)
+        return self.get_pdf(errors, data, None)
+
+    def get_pdf(self, errors, data, resume_id):
         if errors:
             return JsonResponse(data=errors, status=status.HTTP_400_BAD_REQUEST)
         output_dir = settings.BASE_DIR / "resumes_pdfs"
@@ -67,11 +106,11 @@ class ResumeViewSet(BaseViewSet):
         output_file_name = data.profile.email
         filled_resume_path = output_dir / f"{output_file_name}.tex"
         data_sets = {
-            "education": data.education,
-            "experience": data.experience,
-            "project": data.project,
-            "skill": data.skill,
-            "achievement": data.achievement,
+            "education": data.educations,
+            "experience": data.experiences,
+            "project": data.projects,
+            "skill": data.skills,
+            "achievement": data.achievements,
             "profile_links": data.profile_links,
         }
 
@@ -81,7 +120,41 @@ class ResumeViewSet(BaseViewSet):
             return Response({"error": "PDF file not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Use FileResponse to serve the PDF file
-        return FileResponse(open(pdf_file_path, 'rb'), as_attachment=True, filename="resume.pdf")
+        # return FileResponse(open(pdf_file_path, 'rb'), as_attachment=True, filename="resume.pdf")
+
+        with open(pdf_file_path, 'rb') as pdf_file:
+            response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="resume.pdf"'
+            if resume_id:
+                response['X-Resume-ID'] = resume_id
+            return response
+
+    @action(detail=False, methods=['post'], url_path='process-resume')
+    def process_resume(self, request, *args, **kwargs):
+        user = request.user
+        user = User.objects.filter(email='siva010928@gmail.com').first()
+        serializer = ResumeDetailSerializer(data=request.data, context={'user': user})
+
+        if serializer.is_valid():
+            resume_id = request.data.get('id', None)
+
+            if resume_id:
+                # Updating an existing resume
+                try:
+                    resume = Resume.objects.get(id=resume_id, user=user)
+                    updated_resume = serializer.update(resume, serializer.validated_data)
+                except Resume.DoesNotExist:
+                    return Response({"error": "Resume not found."}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                # Creating a new resume
+                updated_resume = serializer.create(serializer.validated_data)
+
+            resume_id = updated_resume.id
+            errors, data = self.controller.parse_request(self.resume_dynamic_schema, request.data)
+            return self.get_pdf(errors, data, resume_id)
+            # return self.get_pdf(None, serializer.validated_data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_perfect_url(url):

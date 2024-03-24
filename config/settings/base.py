@@ -91,11 +91,13 @@ THIRD_PARTY_APPS = [
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+    "rest_framework_jwt"
 ]
 
 LOCAL_APPS = [
     "app.users.apps.UsersConfig",
-    "app.resumes.apps.ResumesConfig"
+    "app.resumes.apps.ResumesConfig",
+    "app.core.apps.CoreConfig"
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -331,7 +333,8 @@ SOCIALACCOUNT_FORMS = {"signup": "app.users.forms.UserSocialSignupForm"}
 # Rest Framework Authentication
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': (
         'rest_framework.pagination.PageNumberPagination',
@@ -356,3 +359,17 @@ SPECTACULAR_SETTINGS = {
 
 RAZOR_KEY_ID = env("RAZOR_KEY_ID")
 RAZOR_KEY_SECRET = env("RAZOR_KEY_SECRET")
+
+
+BASE_BACKEND_URL = env("DJANGO_BASE_BACKEND_URL", default="http://localhost:8000")
+BASE_FRONTEND_URL = env("DJANGO_BASE_FRONTEND_URL", default="http://localhost:3000")
+
+GOOGLE_OAUTH2_CLIENT_ID = env("DJANGO_GOOGLE_OAUTH2_CLIENT_ID", default="")
+GOOGLE_OAUTH2_CLIENT_SECRET = env("DJANGO_GOOGLE_OAUTH2_CLIENT_SECRET", default="")
+GOOGLE_OAUTH2_PROJECT_ID = env("DJANGO_GOOGLE_OAUTH2_PROJECT_ID", default="")
+
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+
+SESSION_SAVE_EVERY_REQUEST = True

@@ -25,6 +25,7 @@ if settings.DEBUG:
 urlpatterns += [
     # API base url
     path("check/api/", include("config.api_router")),
+    # path('check/api/login/', include("app.google_login_server_flow.urls"), name='login'),
     # DRF auth token
     path("check/auth-token/", obtain_auth_token),
 ]

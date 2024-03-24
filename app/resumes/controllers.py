@@ -1,8 +1,13 @@
 # Assuming serializers.py contains all necessary serializers
 from app.resumes.serializers import ProfileSerializer, EducationSerializer, ExperienceSerializer, ProjectSerializer, \
-    AchievementSerializer, SkillSerializer, ProfileLinkSerializer
-from app.resumes.models import Profile, Education, Experience, Project, Achievement, Skill, ProfileLink
+    AchievementSerializer, SkillSerializer, ProfileLinkSerializer, ResumeDetailSerializer
+from app.resumes.models import Profile, Education, Experience, Project, Achievement, Skill, ProfileLink, Resume
 from app.utils.controllers import Controller
+
+
+class ResumeController(Controller):
+    def __init__(self):
+        super().__init__(model=Resume, serializer_class=ResumeDetailSerializer)
 
 
 class ProfileController(Controller):
@@ -38,3 +43,4 @@ class SkillController(Controller):
 class ProfileLinkController(Controller):
     def __init__(self):
         super().__init__(model=ProfileLink, serializer_class=ProfileLinkSerializer)
+

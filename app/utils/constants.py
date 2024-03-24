@@ -15,6 +15,8 @@ class Timeouts:
 
 class CacheKeys(Enum):
     # LIST
+    RESUME_LIST = None
+    RESUME_DETAILS_BY_PK = None
     USER_DETAILS_BY_PK = None
     REVIEW_LIST = None
     REVIEW_DETAILS_BY_PK = None

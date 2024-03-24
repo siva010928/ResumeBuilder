@@ -51,11 +51,27 @@ class ProfileLinkSchema(BaseModel):
     url: str
 
 
+class ResumeListSchema(BaseModel):
+    user_id: int
+
+
 class ResumeSchema(BaseModel):
     profile: ProfileSchema
-    education: List[EducationSchema]
-    experience: List[ExperienceSchema]
-    project: List[ProjectSchema]
-    skill: List[SkillSchema]
-    achievement: List[AchievementSchema]
+    educations: List[EducationSchema]
+    experiences: List[ExperienceSchema]
+    projects: List[ProjectSchema]
+    skills: List[SkillSchema]
+    achievements: List[AchievementSchema]
+    profile_links: List[ProfileLinkSchema]
+
+
+class ResumeDynamicSchema(BaseModel):
+    id: Optional[int] = None
+    title: Optional[str]
+    profile: ProfileSchema
+    educations: List[EducationSchema]
+    experiences: List[ExperienceSchema]
+    projects: List[ProjectSchema]
+    skills: List[SkillSchema]
+    achievements: List[AchievementSchema]
     profile_links: List[ProfileLinkSchema]

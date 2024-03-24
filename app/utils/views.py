@@ -67,11 +67,11 @@ class BaseViewSet(viewsets.ViewSet):
             queryset = data  # Assuming data is a queryset here
             page = paginator.paginate_queryset(queryset, request, view=self)
             if page is not None:
-                res = self.controller.serialize_queryset(page, self.serializer)
+                res = self.controller.serialize_queryset(page)
                 if self.cache_key_list.value:
                     cache.set(cache_key, res, timeout=Timeouts.MINUTES_10)
                 return paginator.get_paginated_response(res)
-            res = self.controller.serialize_queryset(queryset, self.serializer)
+            res = self.controller.serialize_queryset(queryset)
 
         return JsonResponse(res, safe=False, status=status.HTTP_200_OK)
 
@@ -86,7 +86,7 @@ class BaseViewSet(viewsets.ViewSet):
             instance = self.controller.get_instance_by_pk(pk=pk)
             if not instance:
                 return JsonResponse({"error": "Instance with this ID does not exist"}, status=status.HTTP_404_NOT_FOUND)
-            data = self.controller.serialize_one(instance, self.serializer)
+            data = self.controller.serialize_one(instance)
             if self.cache_key_retrieve:
                 cache.set(cache_key, data, timeout=Timeouts.MINUTES_10)
         return JsonResponse(data=data, status=status.HTTP_200_OK)

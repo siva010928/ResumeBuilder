@@ -59,7 +59,9 @@ class GoogleRawLoginFlowService:
 
     def _get_redirect_uri(self):
         domain = settings.BASE_BACKEND_URL
+        print(domain)
         api_uri = self.API_URI
+        print(api_uri)
         redirect_uri = f"{domain}{api_uri}"
         return redirect_uri
 

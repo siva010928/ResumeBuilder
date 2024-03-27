@@ -101,35 +101,41 @@
 \end{center}
 
 
+{% if has_education_content %}
 \vspace{-10pt}
-
 \section{Education}
   {{education_entries}}
+{% endif %}
 
+{% if has_experience_content %}
 \vspace{-10pt}
-
 \section{Experience}
   {{experience_entries}}
+{% endif %}
 
-\vspace{-10pt}
-
+{% if has_project_content %}
+  \vspace{-10pt}
 \section{Projects}
   {{project_entries}}
+{% endif %}
 
+{% if has_achievement_content %}
 \vspace{-10pt}
-
 \section{Achievements}
   {{achievement_entries}}
+{% endif %}
 
-\vspace{-10pt}
-
+{% if has_profile_links_content %}
+  \vspace{-10pt}
 \section{Profile Links}
   {{profile_links_entries}}
+{% endif %}
 
+{% if has_skill_content %}
 \vspace{-10pt}
-
-\section{Technical Skills}
+\section{Skills}
   {{skill_entries}}
+{% endif %}
 
 \vspace{-10pt}
 

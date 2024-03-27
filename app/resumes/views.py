@@ -1,3 +1,4 @@
+import re
 import subprocess
 import os
 
@@ -169,7 +170,7 @@ def prepare_latex_entry(data, section_template):
     entry = ""
     for item in data:
         if section_template == "experience":
-            description_items = "\n".join([f"\\resumeItem{{{desc}}}" for desc in item.description])
+            description_items = "\n".join([f"\\resumeItem{{{escape_latex(desc)}}}" for desc in item.description])
             entry = f"""
             \\resumeSubHeadingListStart
                 \\resumeSubheading
@@ -180,7 +181,7 @@ def prepare_latex_entry(data, section_template):
             \\resumeSubHeadingListEnd
             """
         elif section_template == "project":
-            description_items = "\n".join([f"\\resumeItem{{{desc}}}" for desc in item.description])
+            description_items = "\n".join([f"\\resumeItem{{{escape_latex(desc)}}}" for desc in item.description])
             entry = f"""
             \\resumeSubHeadingListStart
                 \\resumeProjectHeading
@@ -191,7 +192,7 @@ def prepare_latex_entry(data, section_template):
             \\resumeSubHeadingListEnd
             """
         elif section_template == "achievement":
-            description_items = "\n".join([f"\\resumeItem{{{desc}}}" for desc in item.description])
+            description_items = "\n".join([f"\\resumeItem{{{escape_latex(desc)}}}" for desc in item.description])
             entry = f"""
             \\resumeSubHeadingListStart
                 \\item
@@ -242,6 +243,32 @@ def clean_directory(directory):
             item.unlink()
 
 
+def escape_latex(value):
+    """Escapes LaTeX special characters in a string using a precompiled regex."""
+    # Regular expression pattern for LaTeX special characters
+    regex_pattern = re.compile(r'([&%$#_{}~^\\<>])')
+
+    # Replacement function
+    def replace(match):
+        char = match.group(0)
+        return {
+            '&': '\\&',
+            '%': '\\%',
+            '$': '\\$',
+            '#': '\\#',
+            '_': '\\_',
+            '{': '\\{',
+            '}': '\\}',
+            '~': '\\textasciitilde{}',
+            '^': '\\textasciicircum{}',
+            '\\': '\\textbackslash{}',
+            '<': '\\textless{}',
+            '>': '\\textgreater{}',
+        }.get(char, char)
+
+    return regex_pattern.sub(replace, value)
+
+
 def fill_and_compile_latex_template(user_data, data_sets, output_dir, filled_resume_path):
     """Fill a LaTeX template with user data and compile it to a PDF."""
     env = Environment(loader=FileSystemLoader(settings.BASE_DIR), autoescape=False)
@@ -249,7 +276,10 @@ def fill_and_compile_latex_template(user_data, data_sets, output_dir, filled_res
 
     render_data = user_data.dict()
     for section, data in data_sets.items():
-        render_data[f"{section}_entries"] = prepare_latex_entry(data, section)
+        has_content = len(data) > 0  # Check if the section has content
+        render_data[f"has_{section}_content"] = has_content  # Add a flag to indicate if there's content
+        if has_content:
+            render_data[f"{section}_entries"] = prepare_latex_entry(data, section)
 
     filled_content = template.render(**render_data)
     with open(filled_resume_path, 'w') as file:
@@ -257,7 +287,6 @@ def fill_and_compile_latex_template(user_data, data_sets, output_dir, filled_res
 
     if not compile_latex_to_pdf(str(filled_resume_path), str(output_dir)):
         print("Failed to compile LaTeX to PDF.")
-        # clean_directory(output_dir)
         return
 
     print(f"Resume PDF successfully generated at {filled_resume_path.with_suffix('.pdf')}")

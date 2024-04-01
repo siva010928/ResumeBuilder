@@ -75,3 +75,10 @@ class Controller:
         except (IntegrityError, ValueError) as e:
             return get_serialized_exception(e)
         return None, True
+
+    def delete(self, obj):
+        try:
+            obj.delete()
+        except (IntegrityError, ValueError) as e:
+            return get_serialized_exception(e)
+        return None, True

@@ -5,7 +5,7 @@ import os
 from django.contrib.auth import get_user_model
 from django.core import cache
 from django.http import JsonResponse, FileResponse, HttpResponse
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from django.conf import settings
@@ -32,7 +32,11 @@ User = get_user_model()
 
 
 class ResumeViewSet(BaseViewSet):
-    permission_classes = [IsAuthenticated]
+    if settings.DEPLOYMENT_ENVIRONMENT == 'local_dev':
+        authentication_classes = ()
+        permission_classes = ()
+    else:
+        permission_classes = [IsAuthenticated]
     controller = ResumeController()
     list_schema = ResumeListSchema
     resume_schema = ResumeSchema
@@ -91,6 +95,23 @@ class ResumeViewSet(BaseViewSet):
     )
     def retrieve(self, request, pk=None, *args, **kwargs):
         return super().retrieve(request, pk, *args, **kwargs)
+
+    @extend_schema(
+        description="Delete the resume",
+        parameters=[
+            OpenApiParameter(name='pk', location=OpenApiParameter.PATH, required=True, type=int, description='Resume Id'),
+        ],
+        responses={200: OpenApiResponse(description="Resume deleted successfully")}
+    )
+    @action(methods=['POST'], detail=True, url_path='delete')
+    def delete(self, request, pk, *args, **kwargs):
+        instance = self.controller.get_instance_by_pk(pk=pk)
+        if not instance:
+            return JsonResponse({"error": "Resume with this ID does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        errors, _ = self.controller.delete(instance)
+        if errors:
+            return JsonResponse(data=errors, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse(data={"message": "Successfully deleted the resume."}, status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=False, url_path='generate-pdf', permission_classes=[AllowAny])
     def generate_pdf(self, request, *args, **kwargs):

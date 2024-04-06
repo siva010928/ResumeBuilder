@@ -372,3 +372,5 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 
 SESSION_SAVE_EVERY_REQUEST = True
+
+SPECIAL_TOKEN = env("SPECIAL_TOKEN", default="")

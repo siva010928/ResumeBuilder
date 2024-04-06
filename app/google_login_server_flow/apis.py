@@ -9,6 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from app.google_login_server_flow.service import (
     GoogleRawLoginFlowService,
 )
+from app.resumes.permissions import HasSpecialToken
 
 
 def get_tokens_for_user(user, google_user_result):
@@ -98,3 +99,37 @@ class GoogleLoginApi(PublicApi):
         tokens = get_tokens_for_user(user, result)
         return JsonResponse(tokens, status=status.HTTP_200_OK)
 
+
+class CustomLoginApi(PublicApi):
+    permission_classes = [HasSpecialToken]
+
+    class InputSerializer(serializers.Serializer):
+        name = serializers.CharField(required=True)
+        email = serializers.EmailField(required=True)
+
+    def post(self, request, *args, **kwargs):
+        input_serializer = self.InputSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+
+        validated_data = input_serializer.validated_data
+
+        name = validated_data.get("name")
+        email = validated_data.get("email")
+
+        if name is None or email is None:
+            return Response({"error": "Name and Email are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email=email).first()
+
+        if user is None:
+            user = User.objects.create(
+                name=name,
+                email=email
+            )
+
+        result = {
+            "id_token_decoded": 'id_token_decoded',
+            "user_info": 'user_info',
+        }
+        tokens = get_tokens_for_user(user, result)
+        return JsonResponse(tokens, status=status.HTTP_200_OK)

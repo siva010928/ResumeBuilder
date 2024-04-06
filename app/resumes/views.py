@@ -154,7 +154,7 @@ class ResumeViewSet(BaseViewSet):
     @action(detail=False, methods=['post'], url_path='process-resume')
     def process_resume(self, request, *args, **kwargs):
         user = request.user
-        user = User.objects.filter(email='siva010928@gmail.com').first()
+        # user = User.objects.filter(email='siva010928@gmail.com').first()
         serializer = ResumeDetailSerializer(data=request.data, context={'user': user})
 
         if serializer.is_valid():

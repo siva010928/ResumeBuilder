@@ -51,6 +51,7 @@ CORS_ALLOW_METHODS = [
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-csrftoken",
+    "X-Special-Token"
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True

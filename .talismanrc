@@ -1,0 +1,4 @@
+fileignoreconfig:
+- filename: local_dev.env
+  checksum: 4ef9700f3c0b3457e6e60125d51f7470243947ebb8ef0732788678557443211b
+version: ""

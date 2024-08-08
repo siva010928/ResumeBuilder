@@ -245,9 +245,9 @@ def prepare_latex_entry(data, section_template):
 def compile_latex_to_pdf(tex_file, output_dir):
     """Compile a LaTeX file to PDF using pdflatex."""
     pdflatex_path = r"C:\texlive\2023\bin\windows\pdflatex.exe"  # Use the path found with `where pdflatex`
-    command = [pdflatex_path, "-interaction=nonstopmode", "-output-directory", output_dir, tex_file]
-    if settings.DEPLOYMENT_ENVIRONMENT == "prod":
-        command = ["pdflatex", "-interaction=nonstopmode", "-output-directory", output_dir, tex_file]
+    # command = [pdflatex_path, "-interaction=nonstopmode", "-output-directory", output_dir, tex_file]
+    # if settings.DEPLOYMENT_ENVIRONMENT == "prod":
+    command = ["pdflatex", "-interaction=nonstopmode", "-output-directory", output_dir, tex_file]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Error compiling LaTeX file {tex_file}:")

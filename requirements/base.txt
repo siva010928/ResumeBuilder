@@ -1,24 +1,25 @@
-celery==5.3.6  # pyup: < 6.0  # https://github.com/celery/celery
+celery==5.4.0  # pyup: < 6.0  # https://github.com/celery/celery
 
 # Django
 # ------------------------------------------------------------------------------
-django==4.2.10  # pyup: < 5.0  # https://www.djangoproject.com/
+django==4.2.11  # pyup: < 5.0  # https://www.djangoproject.com/
 django-allauth==0.61.1  # https://github.com/pennersr/django-allauth
 # Django REST Framework
 djangorestframework==3.14.0  # https://github.com/encode/django-rest-framework
 # DRF-spectacular for api documentation
 
-pydantic~=2.6.1
-
+pydantic~=2.7.2
 
 pytest~=8.0.0
 Faker~=23.1.0
-Jinja2~=3.1.3
+Jinja2~=3.1.4
 PyJWT~=2.8.0
 requests~=2.31.0
 attrs~=23.2.0
 oauthlib~=3.2.2
 django-debug-toolbar~=4.3.0
 djangorestframework-simplejwt==5.3.1
-
+django-environ==0.11.2
+whitenoise==6.6.0
+drf-spectacular==0.27.2
 newrelic==9.8.0

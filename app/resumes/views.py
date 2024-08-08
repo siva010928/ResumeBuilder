@@ -1,28 +1,24 @@
+import os
 import re
 import subprocess
-import os
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import cache
-from django.http import JsonResponse, FileResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from jinja2 import Environment, FileSystemLoader
-from pathlib import Path
-from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from app.resumes.controllers import (ProfileController, EducationController, ExperienceController,
-                                     ProjectController, AchievementController, SkillController, ProfileLinkController,
-                                     ResumeController)
+
+from app.resumes.controllers import (ResumeController)
 from app.resumes.models import Resume
-from app.resumes.serializers import (ProfileSerializer, EducationSerializer, ExperienceSerializer,
-                                     ProjectSerializer, AchievementSerializer, SkillSerializer, ProfileLinkSerializer,
-                                     ResumeDetailSerializer)
-from app.resumes.schemas import (ProfileSchema, EducationSchema, ExperienceSchema,
-                                 ProjectSchema, AchievementSchema, SkillSchema, ProfileLinkSchema, ResumeSchema,
+from app.resumes.schemas import (ResumeSchema,
                                  ResumeDynamicSchema, ResumeListSchema)
+from app.resumes.serializers import (ResumeDetailSerializer)
 from app.utils.constants import CacheKeys, Timeouts
 from app.utils.helpers import build_cache_key
 from app.utils.pagination import MyPagination
@@ -59,7 +55,7 @@ class ResumeViewSet(BaseViewSet):
         responses={200: ResumeDetailSerializer(many=True)},
     )
     @action(methods=['get'], detail=False, url_path='my-resumes')
-    def my_resumes(self, request, *args, **kwargs):
+    def my_resumes(self, request):
         data = self.list_schema(user_id=request.user.id)
         paginator = MyPagination()
         page_key = request.query_params.get('page')
@@ -104,7 +100,7 @@ class ResumeViewSet(BaseViewSet):
         responses={200: OpenApiResponse(description="Resume deleted successfully")}
     )
     @action(methods=['POST'], detail=True, url_path='delete')
-    def delete(self, request, pk, *args, **kwargs):
+    def delete(self, pk):
         instance = self.controller.get_instance_by_pk(pk=pk)
         if not instance:
             return JsonResponse({"error": "Resume with this ID does not exist"}, status=status.HTTP_404_NOT_FOUND)
@@ -114,17 +110,20 @@ class ResumeViewSet(BaseViewSet):
         return JsonResponse(data={"message": "Successfully deleted the resume."}, status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=False, url_path='generate-pdf', permission_classes=[AllowAny])
-    def generate_pdf(self, request, *args, **kwargs):
+    def generate_pdf(self, request):
         errors, data = self.controller.parse_request(self.resume_schema, request.data)
         return self.get_pdf(errors, data, None)
 
     def get_pdf(self, errors, data, resume_id):
         if errors:
             return JsonResponse(data=errors, status=status.HTTP_400_BAD_REQUEST)
-        output_dir = settings.BASE_DIR / "resumes_pdfs"
-        #  clean before generating new pdf
+
+        output_dir = Path(settings.BASE_DIR) / "resumes_pdfs"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Clean the directory before generating a new PDF
         clean_directory(output_dir)
-        output_dir.mkdir(exist_ok=True)
+
         output_file_name = data.profile.email
         filled_resume_path = output_dir / f"{output_file_name}.tex"
         data_sets = {
@@ -137,22 +136,20 @@ class ResumeViewSet(BaseViewSet):
         }
 
         fill_and_compile_latex_template(data.profile, data_sets, output_dir, filled_resume_path)
+
         pdf_file_path = output_dir / f"{output_file_name}.pdf"
-        if not os.path.exists(pdf_file_path):
+        if not pdf_file_path.exists():
             return Response({"error": "PDF file not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Use FileResponse to serve the PDF file
-        # return FileResponse(open(pdf_file_path, 'rb'), as_attachment=True, filename="resume.pdf")
-
-        with open(pdf_file_path, 'rb') as pdf_file:
+        with pdf_file_path.open('rb') as pdf_file:
             response = HttpResponse(pdf_file.read(), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="resume.pdf"'
+            response['Content-Disposition'] = f'attachment; filename="resume.pdf"'
             if resume_id:
                 response['X-Resume-ID'] = resume_id
             return response
 
     @action(detail=False, methods=['post'], url_path='process-resume')
-    def process_resume(self, request, *args, **kwargs):
+    def process_resume(self, request):
         user = request.user
         # user = User.objects.filter(email='siva010928@gmail.com').first()
         serializer = ResumeDetailSerializer(data=request.data, context={'user': user})
@@ -244,9 +241,6 @@ def prepare_latex_entry(data, section_template):
 
 def compile_latex_to_pdf(tex_file, output_dir):
     """Compile a LaTeX file to PDF using pdflatex."""
-    pdflatex_path = r"C:\texlive\2023\bin\windows\pdflatex.exe"  # Use the path found with `where pdflatex`
-    # command = [pdflatex_path, "-interaction=nonstopmode", "-output-directory", output_dir, tex_file]
-    # if settings.DEPLOYMENT_ENVIRONMENT == "prod":
     command = ["pdflatex", "-interaction=nonstopmode", "-output-directory", output_dir, tex_file]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:

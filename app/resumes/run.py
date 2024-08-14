@@ -30,7 +30,7 @@ def prepare_latex_entry(data, section_template):
             description_items = "\n".join([f"\\resumeItem{{{desc}}}" for desc in item['description']])
             entry = f"""
             \\resumeSubHeadingListStart
-                \\resumeProjectHeading
+                \\resumeSubheading
                 {{{item['name']}}}{{{item['duration']}}}
                 \\resumeItemListStart
                     {description_items}
